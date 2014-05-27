@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- Shoutout to http://zarkonnen.com/all_you_need_is_a_main_game_loop Zarkonnen for this game code
+        all I did was expand on it a little bit and give the dot some Y movement. Hopefully I will be able
+        to add some 'obstacles' and such, and perhaps scrolling. -->
+        <title>Flappy Dot</title>
+        <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+        <script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    </head>
+    <body>
+        <canvas width="400" height="400" id="gameCanvas"></canvas>
+        <script>
+        // Constants:
+        const g = 0.00015;
+        const lift = 0.001;
+        const dotSize = 10;
+
+        // Game state:
+        var dotX = 10.0;
+        var dotY = 150.0;
+        var dotDY = 0.0;
+        var hitCounter = 0;
+        var winner = null;
+
+        function input(msSinceLastUpdate) {
+            // Hit X: accelerate up
+            if (keys["X"]) {
+                hitCounter += 0.13;
+                dotDY -= msSinceLastUpdate * lift;
+            }
+        }
+
+        function update(msSinceLastUpdate) {
+            if (hitCounter < 0.30) {
+                dotX = 10.0;
+                dotY = 150.0;
+                dotDY = 0.0;
+            }
+
+            // Gravity: accelerate down
+            dotDY += msSinceLastUpdate * g;
+
+            // Movement
+            dotY += dotDY * msSinceLastUpdate;
+            dotX += 0.60;
+
+            // Lose when you hit the top or the bottom of the screen.
+            if (dotY < 0 || dotY > 400 - dotSize) {
+                // Reset on death.
+                dotX = 10.0;
+                dotY = 150.0;
+                dotDY = 0.0;
+                hitCounter = 0.0;
+                winner = false;
+            } else if(dotX > 400) {
+                dotX = 10;
+                dotY = 150.0;
+                dotDY = 0.0;
+                hitCounter = 0.0;
+                winner = true;
+            } 
+        }
+
+        function draw() {
+
+            // Draw background
+            c.fillStyle = 'gray';
+            c.fillRect(0, 0, 400, 400);
+            // Draw flappy dot
+            c.fillStyle = 'white';
+            c.fillRect(dotX, dotY, dotSize, dotSize);
+
+            // Mine
+            c.fillText("Press 'x' to fly flappyDot, get him to the end of the screen!", 10, 15);
+            c.fillText("X: " + dotX.toFixed(2) + " Y: " + dotY.toFixed(2) + " dotDY: " + dotDY.toFixed(2) + " hitC:" + hitCounter.toFixed(2), 15, 380);
+            // Draw instructions
+            c.font = "12px Verdana";
+
+            if (winner) {
+                c.fillStyle = 'green';
+                c.fillText("You won, congratulations!", 10, 40);  
+            } else if(winner == false && hitCounter == 0.0) {
+                c.fillText("You lost! Try again..", 10, 40);
+            }
+            
+        }
+
+
+        /**
+         * Game Engine
+         **/
+        var canvas = document.getElementById("gameCanvas");
+        var c = canvas.getContext("2d");
+        var keys = {};
+        var click = null;
+
+        // Listen for key presses.
+        function canvasKeyDown(e) {
+            keys[String.fromCharCode(e.which)] = true;
+        }
+
+        function canvasKeyUp(e) {
+            keys[String.fromCharCode(e.which)] = false;
+        }
+
+        $('body').keydown(canvasKeyDown);
+        $('body').keyup(canvasKeyUp);
+
+        // Listen for clicks.
+        function canvasClick(e) {
+            click = { "x": e.offsetX, "y": e.offsetY };
+        }
+
+        $('#gameCanvas').click(canvasClick);
+
+        // Set up game loop.
+        var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+        var lastUpdate = new Date().getTime();
+
+        function nextFrame() {
+            var currentTime = new Date().getTime();
+            input(currentTime - lastUpdate);
+            click = null;
+            update(currentTime - lastUpdate);
+            draw();
+            lastUpdate = currentTime;
+            requestAnimationFrame(nextFrame);
+        }
+
+        // Once everything is set up, start game loop.
+        requestAnimationFrame(nextFrame);
+        </script>
+    </body>
+</html>
